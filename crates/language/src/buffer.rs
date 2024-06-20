@@ -3881,7 +3881,6 @@ impl BufferSnapshot {
     }
 
     /// Returns all the Git diff hunks intersecting the given row range.
-    #[cfg(any(test, feature = "test-support"))]
     pub fn git_diff_hunks_in_row_range(
         &self,
         range: Range<BufferRow>,
