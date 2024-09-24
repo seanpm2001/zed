@@ -7576,6 +7576,12 @@ impl Editor {
             .update(cx, |buffer, cx| buffer.group_until_transaction(tx_id, cx));
     }
 
+    pub fn open_context_menu(&mut self, _: &OpenContextMenu, cx: &mut ViewContext<Self>) {
+        self.request_autoscroll(Autoscroll::newest(), cx);
+        let position = self.selections.newest_display(cx).end;
+        mouse_context_menu::deploy_context_menu(self, None, position, cx);
+    }
+
     pub fn move_left(&mut self, _: &MoveLeft, cx: &mut ViewContext<Self>) {
         self.change_selections(Some(Autoscroll::fit()), cx, |s| {
             let line_mode = s.line_mode;
@@ -13266,6 +13272,23 @@ impl Editor {
             .get(&type_id)
             .and_then(|item| item.to_any().downcast_ref::<T>())
     }
+
+    fn character_size(&self, cx: &mut ViewContext<Self>) -> gpui::Point<Pixels> {
+        let text_layout_details = self.text_layout_details(cx);
+        let style = &text_layout_details.editor_style;
+        let font_id = cx.text_system().resolve_font(&style.text.font());
+        let font_size = style.text.font_size.to_pixels(cx.rem_size());
+        let line_height = style.text.line_height_in_pixels(cx.rem_size());
+
+        let em_width = cx
+            .text_system()
+            .typographic_bounds(font_id, font_size, 'm')
+            .unwrap()
+            .size
+            .width;
+
+        gpui::Point::new(em_width, line_height)
+    }
 }
 
 fn char_len_with_expanded_tabs(offset: usize, text: &str, tab_size: NonZeroU32) -> usize {
@@ -14645,17 +14668,10 @@ impl ViewInputHandler for Editor {
         cx: &mut ViewContext<Self>,
     ) -> Option<gpui::Bounds<Pixels>> {
         let text_layout_details = self.text_layout_details(cx);
-        let style = &text_layout_details.editor_style;
-        let font_id = cx.text_system().resolve_font(&style.text.font());
-        let font_size = style.text.font_size.to_pixels(cx.rem_size());
-        let line_height = style.text.line_height_in_pixels(cx.rem_size());
-
-        let em_width = cx
-            .text_system()
-            .typographic_bounds(font_id, font_size, 'm')
-            .unwrap()
-            .size
-            .width;
+        let gpui::Point {
+            x: em_width,
+            y: line_height,
+        } = self.character_size(cx);
 
         let snapshot = self.snapshot(cx);
         let scroll_position = snapshot.scroll_position();
