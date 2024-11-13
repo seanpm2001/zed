@@ -30,16 +30,16 @@ pub trait ComponentPreview: IntoElement {
         ExampleLabelSide::default()
     }
 
-    fn examples(_cx: &WindowContext) -> Vec<ComponentExampleGroup<Self>>;
+    fn examples(_cx: &mut WindowContext) -> Vec<ComponentExampleGroup<Self>>;
 
-    fn component_previews(cx: &WindowContext) -> Vec<AnyElement> {
+    fn component_previews(cx: &mut WindowContext) -> Vec<AnyElement> {
         Self::examples(cx)
             .into_iter()
             .map(|example| Self::render_example_group(example))
             .collect()
     }
 
-    fn render_component_previews(cx: &WindowContext) -> AnyElement {
+    fn render_component_previews(cx: &mut WindowContext) -> AnyElement {
         let title = Self::title();
         let (source, title) = title
             .rsplit_once("::")
