@@ -3762,6 +3762,7 @@ dependencies = [
  "snippet",
  "sum_tree",
  "task",
+ "tempfile",
  "text",
  "theme",
  "time",
