@@ -199,7 +199,7 @@ pub fn capture_local_audio_track(
                                 num_channels: channels,
                                 samples_per_channel: data.len() as u32 / channels,
                             })
-                            .ok();
+                            .log_err();
                     },
                     |err| log::error!("error capturing audio track: {:?}", err),
                     None,
@@ -231,7 +231,7 @@ pub fn capture_local_audio_track(
         let source = source.clone();
         async move {
             while let Some(frame) = frame_rx.next().await {
-                source.capture_frame(&frame).await.ok();
+                source.capture_frame(&frame).await.log_err();
             }
             Some(())
         }
@@ -276,7 +276,7 @@ pub fn play_remote_audio_track(
                 if stream_config.as_ref().map_or(true, |c| *c != frame_config) {
                     buffer.resize(buffer_size as usize, 0);
                     stream_config = Some(frame_config.clone());
-                    stream_config_tx.unbounded_send(frame_config).ok();
+                    stream_config_tx.unbounded_send(frame_config).log_err();
                 }
 
                 if frame.data.len() == buffer.len() {
@@ -303,22 +303,26 @@ pub fn play_remote_audio_track(
 
                 let mut _output_stream = None;
                 while let Some(config) = stream_config_rx.next().await {
-                    _output_stream = Some(device.build_output_stream(
-                        &config,
-                        {
-                            let buffer = buffer.clone();
-                            move |data, _info| {
-                                let buffer = buffer.lock();
-                                if data.len() == buffer.len() {
-                                    data.copy_from_slice(&buffer);
-                                } else {
-                                    data.iter_mut().for_each(|x| *x = 0);
-                                }
-                            }
-                        },
-                        |error| log::error!("error playing audio track: {:?}", error),
-                        None,
-                    )?);
+                    _output_stream = Some(
+                        device
+                            .build_output_stream(
+                                &config,
+                                {
+                                    let buffer = buffer.clone();
+                                    move |data, _info| {
+                                        let buffer = buffer.lock();
+                                        if data.len() == buffer.len() {
+                                            data.copy_from_slice(&buffer);
+                                        } else {
+                                            data.iter_mut().for_each(|x| *x = 0);
+                                        }
+                                    }
+                                },
+                                |error| log::error!("error playing audio track: {:?}", error),
+                                None,
+                            )
+                            .log_err(),
+                    );
                 }
 
                 Ok(())
