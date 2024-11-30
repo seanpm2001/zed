@@ -12,7 +12,7 @@ use crate::{
         self, hover_at, HOVER_POPOVER_GAP, MIN_POPOVER_CHARACTER_WIDTH, MIN_POPOVER_LINE_HEIGHT,
     },
     hunk_diff::{diff_hunk_to_display, DisplayDiffHunk},
-    hunk_status,
+    hunk_status, inlay_hint_settings,
     items::BufferSearchHighlights,
     mouse_context_menu::{self, MenuPosition, MouseContextMenu},
     scroll::scroll_amount::ScrollAmount,
@@ -465,6 +465,14 @@ impl EditorElement {
                     return;
                 }
                 editor.update(cx, |editor, cx| {
+                    let inlay_hint_settings = inlay_hint_settings(
+                        editor.selections.newest_anchor().head(),
+                        &editor.buffer.read(cx).snapshot(cx),
+                        cx,
+                    );
+                    if inlay_hint_settings.toggle_on_modifiers_press == Some(event.modifiers) {
+                        // TODO kb decide how to propagate this into the inlay_hint_cache
+                    }
                     if editor.hover_state.focused(cx) {
                         return;
                     }
