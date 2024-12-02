@@ -299,6 +299,7 @@ pub fn init(cx: &mut AppContext) {
     workspace::register_project_item::<Editor>(cx);
     workspace::FollowableViewRegistry::register::<Editor>(cx);
     workspace::register_serializable_item::<Editor>(cx);
+    inlay_hint_cache::init(cx);
 
     cx.observe_new_views(
         |workspace: &mut Workspace, _cx: &mut ViewContext<Workspace>| {

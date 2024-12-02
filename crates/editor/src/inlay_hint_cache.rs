@@ -19,8 +19,8 @@ use crate::{
 use anyhow::Context;
 use clock::Global;
 use futures::future;
-use gpui::{AsyncWindowContext, Model, ModelContext, Task, ViewContext};
-use language::{language_settings::InlayHintKind, Buffer, BufferSnapshot};
+use gpui::{AppContext, AsyncWindowContext, Model, ModelContext, Task, ViewContext};
+use language::{language_settings::InlayHintKind, Buffer, BufferSnapshot, LanguageName};
 use parking_lot::RwLock;
 use project::{InlayHint, ResolveState};
 
@@ -30,6 +30,15 @@ use smol::lock::Semaphore;
 use sum_tree::Bias;
 use text::{BufferId, ToOffset, ToPoint};
 use util::{post_inc, ResultExt};
+
+#[derive(Default, Clone)]
+pub struct InlayHintToggle(HashMap<Option<LanguageName>, bool>);
+
+impl gpui::Global for InlayHintToggle {}
+
+pub fn init(cx: &mut AppContext) {
+    cx.set_global(InlayHintToggle::default());
+}
 
 pub struct InlayHintCache {
     hints: HashMap<ExcerptId, Arc<RwLock<CachedExcerptHints>>>,
@@ -291,7 +300,7 @@ impl InlayHintCache {
         self.invalidate_debounce = debounce_value(new_hint_settings.edit_debounce_ms);
         self.append_debounce = debounce_value(new_hint_settings.scroll_debounce_ms);
         let new_allowed_hint_kinds = new_hint_settings.enabled_inlay_hint_kinds();
-        match (self.enabled, new_hint_settings.enabled) {
+        match dbg!(self.enabled, new_hint_settings.enabled) {
             (false, false) => {
                 self.allowed_hint_kinds = new_allowed_hint_kinds;
                 ControlFlow::Break(None)
