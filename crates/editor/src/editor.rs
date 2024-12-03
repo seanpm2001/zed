@@ -659,6 +659,7 @@ pub struct Editor {
     focused_block: Option<FocusedBlock>,
     next_scroll_position: NextScrollCursorCenterTopBottom,
     addons: HashMap<TypeId, Box<dyn Addon>>,
+    folded_excerpts: HashMap<Anchor, CustomBlockId>,
     _scroll_cursor_center_top_bottom_task: Task<()>,
 }
 
@@ -2152,8 +2153,9 @@ impl Editor {
             focused_block: None,
             next_scroll_position: NextScrollCursorCenterTopBottom::default(),
             addons: HashMap::default(),
-            _scroll_cursor_center_top_bottom_task: Task::ready(()),
             text_style_refinement: None,
+            folded_excerpts: HashMap::default(),
+            _scroll_cursor_center_top_bottom_task: Task::ready(()),
         };
         this.tasks_update_task = Some(this.refresh_runnables(cx));
         this._subscriptions.extend(project_subscriptions);
